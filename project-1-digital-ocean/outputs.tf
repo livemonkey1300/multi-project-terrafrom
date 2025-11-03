@@ -38,6 +38,7 @@ output "password_info" {
     api_key_length          = length(random_password.api_key.result)
     environment             = var.environment
   }
+  sensitive   = true
 }
 
 # If you need to use the password in other resources, you can reference it like:
