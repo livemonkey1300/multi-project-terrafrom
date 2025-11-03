@@ -71,9 +71,9 @@ jobs:
         cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
 
     - name: Terraform Init
-      working-directory: ${{ github.event.inputs.module }}/
+      working-directory: project-1-digital-ocean/
       run: terraform init 
 
     - name: Terraform Plan
-      working-directory: ${{ github.event.inputs.module }}/
+      working-directory: project-1-digital-ocean/
       run: terraform plan -out=tfplan
