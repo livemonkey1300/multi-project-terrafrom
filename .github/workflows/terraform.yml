@@ -72,69 +72,63 @@ jobs:
 
     - name: Terraform Plan
       working-directory: ${{ github.event.inputs.module }}/
-      run: terraform plan -out=tfplan
+      run: terraform plan
 
-    - name: Upload Plan
-      uses: actions/upload-artifact@v3
-      with:
-        name: tfplan-${{ github.event.inputs.module }}
-        path: ${{ github.event.inputs.module }}/tfplan
-        retention-days: 5
 
-  terraform-apply:
-    name: 'Terraform Apply'
-    runs-on: ubuntu-latest
-    needs: terraform-plan
-    if: github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'apply'
-    environment: ${{ github.event.inputs.environment }}
+  # terraform-apply:
+  #   name: 'Terraform Apply'
+  #   runs-on: ubuntu-latest
+  #   needs: terraform-plan
+  #   if: github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'apply'
+  #   environment: ${{ github.event.inputs.environment }}
     
-    steps:
-    - name: Checkout
-      uses: actions/checkout@v4
+  #   steps:
+  #   - name: Checkout
+  #     uses: actions/checkout@v4
 
-    - name: Setup Terraform
-      uses: hashicorp/setup-terraform@v3
-      with:
-        terraform_version: ${{ env.TF_VERSION }}
+  #   - name: Setup Terraform
+  #     uses: hashicorp/setup-terraform@v3
+  #     with:
+  #       terraform_version: ${{ env.TF_VERSION }}
 
-    - name: Download Plan
-      uses: actions/download-artifact@v3
-      with:
-        name: tfplan-${{ github.event.inputs.module }}
-        path: ${{ github.event.inputs.module }}/
+  #   - name: Download Plan
+  #     uses: actions/download-artifact@v3
+  #     with:
+  #       name: tfplan-${{ github.event.inputs.module }}
+  #       path: ${{ github.event.inputs.module }}/
 
-    - name: Terraform Init
-      working-directory: ${{ github.event.inputs.module }}/
-      run: terraform init
+  #   - name: Terraform Init
+  #     working-directory: ${{ github.event.inputs.module }}/
+  #     run: terraform init
 
-    - name: Terraform Apply
-      working-directory: ${{ github.event.inputs.module }}/
-      run: terraform apply -auto-approve tfplan
+  #   - name: Terraform Apply
+  #     working-directory: ${{ github.event.inputs.module }}/
+  #     run: terraform apply -auto-approve tfplan
 
-  terraform-destroy:
-    name: 'Terraform Destroy'
-    runs-on: ubuntu-latest
-    if: github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'destroy'
-    environment: ${{ github.event.inputs.environment }}-destroy
+  # terraform-destroy:
+  #   name: 'Terraform Destroy'
+  #   runs-on: ubuntu-latest
+  #   if: github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'destroy'
+  #   environment: ${{ github.event.inputs.environment }}-destroy
     
-    steps:
-    - name: Checkout
-      uses: actions/checkout@v4
+  #   steps:
+  #   - name: Checkout
+  #     uses: actions/checkout@v4
 
-    - name: Setup Terraform
-      uses: hashicorp/setup-terraform@v3
-      with:
-        terraform_version: ${{ env.TF_VERSION }}
+  #   - name: Setup Terraform
+  #     uses: hashicorp/setup-terraform@v3
+  #     with:
+  #       terraform_version: ${{ env.TF_VERSION }}
 
-    - name: Terraform Init
-      working-directory: ${{ github.event.inputs.module }}/
-      run: terraform init
+  #   - name: Terraform Init
+  #     working-directory: ${{ github.event.inputs.module }}/
+  #     run: terraform init
 
-    - name: Terraform Plan Destroy
-      working-directory: ${{ github.event.inputs.module }}/
-      run: terraform plan -destroy -out=destroy-plan
+  #   - name: Terraform Plan Destroy
+  #     working-directory: ${{ github.event.inputs.module }}/
+  #     run: terraform plan -destroy -out=destroy-plan
 
-    - name: Terraform Destroy
-      working-directory: ${{ github.event.inputs.module }}/
-      run: terraform apply -auto-approve destroy-plan
+  #   - name: Terraform Destroy
+  #     working-directory: ${{ github.event.inputs.module }}/
+  #     run: terraform apply -auto-approve destroy-plan
  
