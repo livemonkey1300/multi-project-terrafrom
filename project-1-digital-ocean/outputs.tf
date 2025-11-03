@@ -30,16 +30,7 @@ output "resource_suffix" {
 }
 
 # Password lengths for reference (not sensitive)
-output "password_info" {
-  description = "Information about generated passwords"
-  value = {
-    main_password_length     = length(random_password.main_password.result)
-    database_password_length = length(random_password.database_password.result)
-    api_key_length          = length(random_password.api_key.result)
-    environment             = var.environment
-  }
-  sensitive   = true
-}
+
 
 # If you need to use the password in other resources, you can reference it like:
 # password = random_password.main_password.result
