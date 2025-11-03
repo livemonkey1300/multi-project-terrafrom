@@ -1,4 +1,4 @@
-# Outputs for generated passwords
+# Outputs for generated passwords and keys
 # Note: These are marked as sensitive to prevent them from being displayed in logs
 
 output "main_password" {
@@ -19,8 +19,31 @@ output "api_key" {
   sensitive   = true
 }
 
+output "session_id" {
+  description = "Generated UUID for session identification"
+  value       = random_uuid.session_id.result
+}
+
+output "resource_suffix" {
+  description = "Random string for resource naming"
+  value       = random_string.resource_suffix.result
+}
+
+# Password lengths for reference (not sensitive)
+output "password_info" {
+  description = "Information about generated passwords"
+  value = {
+    main_password_length     = length(random_password.main_password.result)
+    database_password_length = length(random_password.database_password.result)
+    api_key_length          = length(random_password.api_key.result)
+    environment             = var.environment
+  }
+}
+
 # If you need to use the password in other resources, you can reference it like:
 # password = random_password.main_password.result
 
-# Example of how to store in Terraform Cloud as a sensitive variable
-# You can then use terraform output to retrieve these values when needed
+# Example of how to retrieve passwords using Terraform CLI:
+# terraform output -raw main_password
+# terraform output -raw database_password
+# terraform output -raw api_key
