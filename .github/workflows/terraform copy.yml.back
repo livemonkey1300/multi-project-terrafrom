@@ -1,0 +1,279 @@
+name: 'Terraform Multi-Directory Pipeline'
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+    paths:
+      - 'terraform/**'
+      - '.github/workflows/terraform.yml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'terraform/**'
+      - '.github/workflows/terraform.yml'
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'Terraform Action'
+        required: true
+        default: 'plan'
+        type: choice
+        options:
+          - plan
+          - apply
+          - destroy
+      environment:
+        description: 'Environment'
+        required: true
+        default: 'dev'
+        type: choice
+        options:
+          - dev
+          - staging
+          - all
+      module:
+        description: 'Module'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - network
+          - app
+          - all
+
+env:
+  TF_VERSION: '1.6.0'
+  TF_LOG: INFO
+  AWS_REGION: 'us-east-1'  # Change as needed
+
+jobs:
+  terraform-1:
+    name: 'Terraform Plan'
+    runs-on: ubuntu-latest
+    if: always() && (github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'plan') || (github.event_name == 'push' && github.ref == 'refs/heads/main'))
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: ${{ env.TF_VERSION }}
+
+
+  # terraform-check:
+  #   name: 'Terraform Check'
+  #   runs-on: ubuntu-latest
+  #   if: github.event_name == 'pull_request'
+    
+  #   steps:
+  #   - name: Checkout
+  #     uses: actions/checkout@v4
+
+  #   - name: Setup Terraform
+  #     uses: hashicorp/setup-terraform@v3
+  #     with:
+  #       terraform_version: ${{ env.TF_VERSION }}
+
+  #   - name: Terraform Format Check
+  #     run: terraform fmt -check -recursive terraform/
+
+  #   - name: Terraform Validation
+  #     run: |
+  #       for dir in terraform/environments/*/network terraform/environments/*/app; do
+  #         if [ -d "$dir" ]; then
+  #           echo "Validating $dir"
+  #           cd "$dir"
+  #           terraform init -backend=false
+  #           terraform validate
+  #           cd - > /dev/null
+  #         fi
+  #       done
+
+  # plan-matrix:
+  #   name: 'Generate Plan Matrix'
+  #   runs-on: ubuntu-latest
+  #   outputs:
+  #     matrix: ${{ steps.set-matrix.outputs.matrix }}
+  #   steps:
+  #   - name: Checkout
+  #     uses: actions/checkout@v4
+      
+  #   - name: Set matrix
+  #     id: set-matrix
+  #     run: |
+  #       if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+  #         # Manual trigger - use inputs
+  #         ENV="${{ github.event.inputs.environment }}"
+  #         MODULE="${{ github.event.inputs.module }}"
+  #       else
+  #         # Automatic trigger - plan all
+  #         ENV="all"
+  #         MODULE="all"
+  #       fi
+        
+  #       MATRIX_INCLUDE="["
+        
+  #       # Generate matrix based on inputs
+  #       if [ "$ENV" == "all" ]; then
+  #         ENVIRONMENTS=("dev" "staging")
+  #       else
+  #         ENVIRONMENTS=("$ENV")
+  #       fi
+        
+  #       if [ "$MODULE" == "all" ]; then
+  #         MODULES=("network" "app")
+  #       else
+  #         MODULES=("$MODULE")
+  #       fi
+        
+  #       FIRST=true
+  #       for env in "${ENVIRONMENTS[@]}"; do
+  #         for module in "${MODULES[@]}"; do
+  #           if [ "$FIRST" = true ]; then
+  #             FIRST=false
+  #           else
+  #             MATRIX_INCLUDE+=","
+  #           fi
+  #           MATRIX_INCLUDE+="{\"environment\":\"$env\",\"module\":\"$module\",\"directory\":\"terraform/environments/$env/$module\"}"
+  #         done
+  #       done
+        
+  #       MATRIX_INCLUDE+="]"
+        
+  #       echo "matrix={\"include\":$MATRIX_INCLUDE}" >> $GITHUB_OUTPUT
+  #       echo "Generated matrix: {\"include\":$MATRIX_INCLUDE}"
+
+  # terraform-plan:
+  #   name: 'Terraform Plan'
+  #   runs-on: ubuntu-latest
+  #   needs: plan-matrix
+  #   if: always() && (github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'plan') || (github.event_name == 'push' && github.ref == 'refs/heads/main'))
+    
+  #   strategy:
+  #     matrix: ${{ fromJson(needs.plan-matrix.outputs.matrix) }}
+  #     fail-fast: false
+    
+  #   steps:
+  #   - name: Checkout
+  #     uses: actions/checkout@v4
+
+  #   - name: Setup Terraform
+  #     uses: hashicorp/setup-terraform@v3
+  #     with:
+  #       terraform_version: ${{ env.TF_VERSION }}
+
+  #   - name: Configure AWS Credentials
+  #     uses: aws-actions/configure-aws-credentials@v4
+  #     with:
+  #       aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  #       aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  #       aws-region: ${{ env.AWS_REGION }}
+
+  #   - name: Terraform Init
+  #     working-directory: ${{ matrix.directory }}
+  #     run: terraform init
+
+  #   - name: Terraform Plan
+  #     working-directory: ${{ matrix.directory }}
+  #     run: |
+  #       terraform plan \
+  #         -var-file="../../../terraform.tfvars" \
+  #         -var="environment=${{ matrix.environment }}" \
+  #         -out=tfplan-${{ matrix.environment }}-${{ matrix.module }}
+  #     continue-on-error: true
+
+  #   - name: Upload Plan
+  #     uses: actions/upload-artifact@v3
+  #     with:
+  #       name: tfplan-${{ matrix.environment }}-${{ matrix.module }}
+  #       path: ${{ matrix.directory }}/tfplan-${{ matrix.environment }}-${{ matrix.module }}
+  #       retention-days: 5
+
+  # terraform-apply:
+  #   name: 'Terraform Apply'
+  #   runs-on: ubuntu-latest
+  #   needs: [plan-matrix, terraform-plan]
+  #   if: github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'apply'
+  #   environment: ${{ github.event.inputs.environment }}
+    
+  #   strategy:
+  #     matrix: ${{ fromJson(needs.plan-matrix.outputs.matrix) }}
+  #     fail-fast: false
+    
+  #   steps:
+  #   - name: Checkout
+  #     uses: actions/checkout@v4
+
+  #   - name: Setup Terraform
+  #     uses: hashicorp/setup-terraform@v3
+  #     with:
+  #       terraform_version: ${{ env.TF_VERSION }}
+
+  #   - name: Configure AWS Credentials
+  #     uses: aws-actions/configure-aws-credentials@v4
+  #     with:
+  #       aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  #       aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  #       aws-region: ${{ env.AWS_REGION }}
+
+  #   - name: Download Plan
+  #     uses: actions/download-artifact@v3
+  #     with:
+  #       name: tfplan-${{ matrix.environment }}-${{ matrix.module }}
+  #       path: ${{ matrix.directory }}/
+
+  #   - name: Terraform Init
+  #     working-directory: ${{ matrix.directory }}
+  #     run: terraform init
+
+  #   - name: Terraform Apply
+  #     working-directory: ${{ matrix.directory }}
+  #     run: terraform apply -auto-approve tfplan-${{ matrix.environment }}-${{ matrix.module }}
+
+  # terraform-destroy:
+    name: 'Terraform Destroy'
+    runs-on: ubuntu-latest
+    needs: plan-matrix
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'destroy'
+    environment: ${{ github.event.inputs.environment }}-destroy
+    
+    strategy:
+      matrix: ${{ fromJson(needs.plan-matrix.outputs.matrix) }}
+      fail-fast: false
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: ${{ env.TF_VERSION }}
+
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: Terraform Init
+      working-directory: ${{ matrix.directory }}
+      run: terraform init
+
+    - name: Terraform Plan Destroy
+      working-directory: ${{ matrix.directory }}
+      run: |
+        terraform plan -destroy \
+          -var-file="../../../terraform.tfvars" \
+          -var="environment=${{ matrix.environment }}" \
+          -out=destroy-plan-${{ matrix.environment }}-${{ matrix.module }}
+
+    - name: Terraform Destroy
+      working-directory: ${{ matrix.directory }}
+      run: terraform apply -auto-approve destroy-plan-${{ matrix.environment }}-${{ matrix.module }}
