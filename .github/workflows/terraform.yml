@@ -76,4 +76,4 @@ jobs:
 
     - name: Terraform Plan
       working-directory: project-1-digital-ocean/
-      run: terraform plan -out=tfplan
+      run: terraform plan
