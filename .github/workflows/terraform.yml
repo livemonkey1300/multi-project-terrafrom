@@ -59,6 +59,7 @@ jobs:
     
     env:
       TF_API_TOKEN: ${{ secrets.TF_API_TOKEN }}
+      TF_MODULE: ${{ github.event.inputs.module }}
 
     steps:
     - name: Checkout
@@ -71,9 +72,9 @@ jobs:
         cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
 
     - name: Terraform Init
-      working-directory: "${{ github.event.inputs.module }}/"
+      working-directory: "${{ env.TF_MODULE }}/"
       run: terraform init
 
     - name: Terraform Plan
-      working-directory: "${{ github.event.inputs.module }}/"
+      working-directory: "${{ env.TF_MODULE }}/"
       run: terraform plan
