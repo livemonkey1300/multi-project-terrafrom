@@ -33,18 +33,15 @@ on:
         options:
           - dev
           - staging
-          - all
+          - prod
       module:
         description: 'Module'
         required: true
-        default: 'project-1-digital-ocean'
+        default: 'google-vm-small'
         type: choice
         options:
           - project-1-digital-ocean
-          - terraform/environments/dev/network
-          - terraform/environments/dev/app
-          - terraform/environments/staging/network
-          - terraform/environments/staging/app
+          - google-vm-small
 
 env:
   TF_VERSION: '1.6.0'
