@@ -47,9 +47,9 @@ resource "google_compute_instance" "vm_instance" {
     }
   }
 
-  metadata = {
-    ssh-keys = "terraform:${file("~/.ssh/id_rsa.pub")}"
-  }
+  # metadata = {
+  #   ssh-keys = "terraform:${file("~/.ssh/id_rsa.pub")}"
+  # }
 
   labels = {
     environment = "dev"
