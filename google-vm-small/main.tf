@@ -21,7 +21,10 @@ provider "google" {
   zone        = var.zone
 }
 
-
+data "google_compute_image" "vm_image" {
+  family  = "debian-12"
+  project = "debian-cloud"
+}
 
 resource "google_compute_instance" "vm_instance" {
   name         = var.instance_name
