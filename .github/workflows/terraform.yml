@@ -60,7 +60,7 @@ jobs:
       )
     env:
       TF_API_TOKEN: ${{ secrets.TF_API_TOKEN }}
-      TF_MODULE: ${{ github.event.inputs.module || 'project-1-digital-ocean' }}
+      TF_MODULE: ${{ github.event.inputs.module || 'google-vm-small' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
